@@ -6,6 +6,7 @@
     </div>
 
 
+
     <ul v-if="messageOrConfigure" class="messages">
       <li class="message" v-for="item in messages" :key="item.id">
         <Message :message=item.message :author=item.author :service="item.service" :channel=item.channel />
@@ -25,15 +26,22 @@ export default {
   },
   data() {
     return {
+    conversations: null,
+    response: null,
     messages: null,
     messageOrConfigure: false,
     }
   },
-   mounted () {
-         axios
-           .get('https://api.coindesk.com/v1/bpi/currentprice.json')
-           .then(response => (this.info = response))
-       },
+  mounted () {
+    var requestOptions = {
+        method: 'GET',
+    };
+
+    fetch(`https://slack.com/api/conversations.list?token=${process.env.VUE_APP_SLACK_TOKEN}&pretty=1`, requestOptions)
+      .then(response => response.text())
+      .then(result => console.log(result))
+      .catch(error => console.log('error', error));
+  }
 }
 </script>
 
