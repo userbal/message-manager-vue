@@ -2,16 +2,17 @@
   <div id="app">
 
     <div class="navbar">
-      <div v-if="!messageOrConfigure" class="nav-option" @click="messageOrConfigure = !messageOrConfigure">Messages</div>
-      <div v-if="messageOrConfigure" class="nav-option" @click="messageOrConfigure = !messageOrConfigure">Configure</div>
+      <div v-if="!messageOrConfigure" class="nav-option" @click="messageOrConfigure = !messageOrConfigure">
+        <h2>View Messages</h2>
+        </div>
+      <div v-if="messageOrConfigure" class="nav-option" @click="messageOrConfigure = !messageOrConfigure">
+        <h2>Message Manager</h2>
+        </div>
     </div>
 
     <div class="configure" v-if="!messageOrConfigure" >
-      <ul v-for="config of configs" :key="config.id">
-      <div class="config" >
-        <Director :channels=discordChannels />
-        <div class="remove-config" @click="removeConfig">×</div>
-      </div>
+      <ul v-for="config of configs" :key="config.id" v-on:remove="console.log('remove')">
+        <Director :config="config" :discordChannels=discordChannels :slackChannels=slackChannels v-on:remove="deleteConfig(config.id)"/>
       </ul>
       <div class="add-config" @click="addConfig" >+</div>
     </div>
@@ -47,22 +48,29 @@ export default {
   },
   data() {
     return {
-      configs: [{id: Math.random()}],
-    slackChannels: [],
-    slackMessages: [],
-    discordChannels: [],
-    discordGuilds: [],
-    discordMessages: [],
-    messageOrConfigure: false,
+      configs: [{id: Math.random(), sendFromService: "", sendFromChannel: "", sendToService: "", sendToChannel: ""}],
+      slackChannels: [],
+      slackMessages: [],
+      discordChannels: [],
+      discordGuilds: [],
+      discordMessages: [],
+      messageOrConfigure: false,
     }
   },
   methods: {
+    saveConfigs() {
+      console.log("save cats")
+      const parsed = JSON.stringify(this.configs);
+      localStorage.setItem('configs', parsed);
+    },
     addConfig() {
       this.configs.push({id: Math.random()})
-      console.log(this.configs)
+      this.saveConfigs()
     },
-    removeConfig(id) {
-      delete this.configs[id]
+    deleteConfig(id) {
+      console.log("s")
+      this.configs = this.configs.filter(configs => configs.id !== id);
+      this.saveConfigs()
     },
     async updateSlackChannels () {
       let response = await axios.get(`https://slack.com/api/conversations.list?token=${process.env.VUE_APP_SLACK_TOKEN}&pretty=1`)
@@ -137,6 +145,16 @@ export default {
     await this.updateSlackChannels()
     this.updateSlackMessages()
 
+    //localstorage
+    if (localStorage.getItem('configs')) {
+      try {
+        this.configs = JSON.parse(localStorage.getItem('configs'));
+        console.log(this.configs[0].selectedToService)
+      } catch(e) {
+        localStorage.removeItem('configs');
+      }
+    }
+
   }
 }
 
@@ -168,15 +186,15 @@ export default {
 .nav-option{
   padding: 8px;
   margin-bottom: 5px;
-  background-color: grey;
   color: black;
+  text-decoration: underline;
   font-size: 20px;
   -webkit-user-select: none; /* Safari */
   -ms-user-select: none; /* IE 10+ and Edge */
   user-select: none; /* Standard syntax */
 }
 .nav-option:hover {
-  color: red;
+  color:  blue;
 }
 
 .message-container{
@@ -191,7 +209,7 @@ export default {
   color: black;
   justify-content: center;
   font-size: 35px;
-  padding-top: 32px;
+  padding-top: 45px;
   -webkit-user-select: none; /* Safari */
   -ms-user-select: none; /* IE 10+ and Edge */
   user-select: none; /* Standard syntax */
@@ -201,11 +219,11 @@ export default {
   color: red;
 }
 .add-config{
-  float: right;
   font-size: 50px;
   -webkit-user-select: none; /* Safari */
   -ms-user-select: none; /* IE 10+ and Edge */
   user-select: none; /* Standard syntax */
+  width: 100%;
 }
 .add-config:hover {
   color: green;
@@ -218,6 +236,7 @@ h1{
 ul{
   list-style-type: none;
   margin: 0;
+  margin-top: 30px;
   padding: 0;
 }
 </style>
