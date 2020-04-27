@@ -12,7 +12,14 @@
 
     <div class="configure" v-if="!messageOrConfigure" >
       <ul v-for="config of configs" :key="config.id" v-on:remove="console.log('remove')">
-        <Director :config="config" :discordChannels=discordChannels :slackChannels=slackChannels v-on:remove="deleteConfig(config.id)"/>
+        <Director 
+          :config="config" 
+          :discordChannels=discordChannels 
+          :slackChannels=slackChannels 
+          v-on:remove="deleteConfig(config.id)" 
+          v-on:update="updateConfig()"
+          :active=false
+        />
       </ul>
       <div class="add-config" @click="addConfig" >+</div>
     </div>
@@ -48,7 +55,7 @@ export default {
   },
   data() {
     return {
-      configs: [{id: Math.random(), sendFromService: "", sendFromChannel: "", sendToService: "", sendToChannel: ""}],
+      configs: [{id: Math.random(), sendFromService: "", sendFromChannel: "", sendToService: "", sendToChannel: "", active: "" }],
       slackChannels: [],
       slackMessages: [],
       discordChannels: [],
@@ -58,8 +65,16 @@ export default {
     }
   },
   methods: {
+    updateConfig($emit) {
+      console.log($emit)
+      // this.configs[id].sendFromService = fromService
+      // this.configs[id].sendFromChannel = fromChannel
+      // this.configs[id].sendToService = toService
+      // this.configs[id].sendToChannel = toChannel
+      // this.saveConfigs()
+    },
     saveConfigs() {
-      console.log("save cats")
+      console.log("save configs")
       const parsed = JSON.stringify(this.configs);
       localStorage.setItem('configs', parsed);
     },
@@ -88,6 +103,7 @@ export default {
             text: messages[i].text,
             service: 'slack',
             channel: conversation.name,
+            time: messages[i].ts
           }
           allMessages.push(message)
         }
@@ -130,7 +146,8 @@ export default {
          username: messages[i].author.username, //this will need to be completed with an api call
          text: messages[i].content,
          service: 'discord',
-         channel: `${channel.guild}-${channel.name}`
+         channel: `${channel.guild}-${channel.name}`,
+         time: Date.parse(messages[i].timestamp)/1000
        }
        allMessages.push(message)
        }
@@ -149,7 +166,6 @@ export default {
     if (localStorage.getItem('configs')) {
       try {
         this.configs = JSON.parse(localStorage.getItem('configs'));
-        console.log(this.configs[0].selectedToService)
       } catch(e) {
         localStorage.removeItem('configs');
       }
